@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N'FAYE • Assistant Vocal IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        
+        :root {
+            --primary: #6366f1;
+        }
+        
+        body {
+            font-family: 'Inter', system_ui, sans-serif;
+        }
+        
+        .font-display {
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        .futuristic-bg {
+            background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+        }
+
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.3),
+                        0 0 30px rgba(99, 102, 241, 0.1);
+        }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(20px);
+        }
+
+        .orb {
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle at 40% 30%, #6366f1, #312e81);
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.6),
+                        inset 0 0 40px rgba(255,255,255,0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .orb.listening {
+            animation: pulse-listen 1.5s infinite ease-in-out;
+            box-shadow: 0 0 80px rgba(52, 211, 153, 0.7),
+                        inset 0 0 40px rgba(255,255,255,0.15);
+        }
+
+        .orb.speaking {
+            animation: pulse-speak 0.8s infinite ease-in-out;
+            box-shadow: 0 0 80px rgba(251, 191, 36, 0.7),
+                        inset 0 0 40px rgba(255,255,255,0.15);
+        }
+
+        .orb.thinking {
+            animation: pulse-think 1.2s infinite ease-in-out;
+            box-shadow: 0 0 70px rgba(167, 139, 250, 0.6),
+                        inset 0 0 40px rgba(255,255,255,0.15);
+        }
+
+        @keyframes pulse-listen {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        
+        @keyframes pulse-speak {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+
+        @keyframes pulse-think {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .status-text {
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+
+        .message {
+            max-width: 85%;
+            animation: fadeInUp 0.3s ease forwards;
+        }
+
+        .section-header {
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+        }
+
+        .modern-shadow {
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.4);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 futuristic-bg">
+    <div class="max-w-4xl mx-auto min-h-screen p-4 md:p-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center gap-x-3">
+                <div class="w-11 h-11 flex items-center justify-center bg-indigo-600 rounded-2xl">
+                    <i class="fa-solid fa-robot text-white text-3xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-display text-4xl font-semibold tracking-tighter">N'FAYE</h1>
+                    <p class="text-indigo-400 text-sm -mt-1">Assistant Vocal IA</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-x-2">
+                <div class="px-3 py-1.5 rounded-3xl bg-slate-900 flex items-center gap-x-2 text-sm">
+                    <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                    <span class="text-emerald-400 text-xs font-medium">EN LIGNE</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div class="glass border border-slate-800 rounded-3xl p-8 modern-shadow">
+            
+            <!-- Status Orb -->
+            <div class="flex flex-col items-center mb-8">
+                <div id="orb" 
+                     class="orb rounded-full flex items-center justify-center cursor-pointer border border-indigo-500/30 mb-4"
+                     onclick="toggleListening()">
+                    <div class="text-center">
+                        <i id="orb-icon" class="fa-solid fa-microphone text-white text-5xl opacity-90"></i>
+                    </div>
+                </div>
+                
+                <div id="status" 
+                     class="px-5 py-1.5 bg-slate-900 rounded-3xl text-sm font-medium flex items-center gap-x-2">
+                    <span id="status-text">Prêt à vous écouter</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-center gap-x-3 mb-8">
+                <button onclick="toggleListening()"
+                        class="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 transition-colors text-white font-medium rounded-3xl flex items-center gap-x-2 text-sm">
+                    <i class="fa-solid fa-microphone mr-2"></i>
+                    <span id="mic-btn-text">Activer le microphone</span>
+                </button>
+                
+                <button onclick="stopAssistant()"
+                        class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 transition-colors text-white font-medium rounded-3xl flex items-center gap-x-2 text-sm border border-slate-700">
+                    <i class="fa-solid fa-stop mr-2"></i>
+                    <span>Arrêter</span>
+                </button>
+            </div>
+
+            <!-- Conversation Area -->
+            <div class="mb-2 px-1 flex items-center justify-between">
+                <div class="section-header text-slate-400 font-medium">CONVERSATION</div>
+            </div>
+            
+            <div id="conversation" 
+                 class="h-[260px] overflow-y-auto bg-slate-900/70 border border-slate-800 rounded-3xl p-5 space-y-4 text-sm">
+                <!-- Messages populated via JS -->
+            </div>
+
+            <!-- Quick Commands -->
+            <div class="mt-6">
+                <div class="section-header text-slate-400 font-medium mb-2 px-1">COMMANDES RAPIDES</div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="quickCommand('Quelle heure est-il ?')" 
+                            class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 transition-colors rounded-2xl text-slate-300">Quelle heure est-il ?</button>
+                    <button onclick="quickCommand('Quel jour sommes-nous ?')" 
+                            class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 transition-colors rounded-2xl text-slate-300">Quel jour sommes-nous ?</button>
+                    <button onclick="quickCommand('Bonjour N\'FAYE')" 
+                            class="px-4 py-2 text-xs bg-slate-800 hover:bg-slate-700 transition-colors rounded-2xl text-slate-300">Bonjour N'FAYE</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <p class="text-xs text-slate-500">Version 1.0 • Reconnaissance vocale française • Web Speech API</p>
+        </div>
+    </div>
+
+    <script>
+        // Tailwind script
+        function initializeTailwind() {
+            document.documentElement.style.setProperty('--accent', '#6366f1');
+        }
+        
+        let isListening = false;
+        let recognition = null;
+        let synth = window.speechSynthesis;
+        let conversation = document.getElementById('conversation');
+        let orb = document.getElementById('orb');
+        let statusText = document.getElementById('status-text');
+        let micBtnText = document.getElementById('mic-btn-text');
+        let orbIcon = document.getElementById('orb-icon');
+
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            if (!('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
+                alert("Votre navigateur ne supporte pas la reconnaissance vocale. Veuillez utiliser Chrome ou Edge.");
+                return false;
+            }
+            
+            const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognitionAPI();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'fr-FR';
+            
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript;
+                addMessage(transcript, 'user');
+                
+                // Simulate thinking
+                setStatus('thinking', "N'FAYE réfléchit...");
+                
+                setTimeout(() => {
+                    processCommand(transcript);
+                }, 800);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Erreur de reconnaissance:', event);
+                setStatus('idle', "Erreur de reconnaissance");
+                resetOrb();
+            };
+            
+            recognition.onend = function() {
+                if (isListening) {
+                    isListening = false;
+                    resetOrb();
+                }
+            };
+            
+            return true;
+        }
+        
+        function setStatus(mode, text) {
+            statusText.textContent = text;
+            
+            orb.classList.remove('listening', 'speaking', 'thinking');
+            
+            if (mode === 'listening') {
+                orb.classList.add('listening');
+                orbIcon.className = 'fa-solid fa-microphone text-emerald-300 text-5xl';
+            } else if (mode === 'speaking') {
+                orb.classList.add('speaking');
+                orbIcon.className = 'fa-solid fa-volume-up text-amber-300 text-5xl';
+            } else if (mode === 'thinking') {
+                orb.classList.add('thinking');
+                orbIcon.className = 'fa-solid fa-brain text-violet-300 text-5xl';
+            } else {
+                orbIcon.className = 'fa-solid fa-microphone text-white text-5xl';
+            }
+        }
+        
+        function resetOrb() {
+            orb.classList.remove('listening', 'speaking', 'thinking');
+            orbIcon.className = 'fa-solid fa-microphone text-white text-5xl';
+            statusText.textContent = "Prêt à vous écouter";
+            micBtnText.textContent = "Activer le microphone";
+        }
+        
+        function toggleListening() {
+            if (!recognition) {
+                if (!initSpeechRecognition()) return;
+            }
+            
+            if (isListening) {
+                recognition.stop();
+                isListening = false;
+                resetOrb();
+            } else {
+                try {
+                    recognition.start();
+                    isListening = true;
+                    setStatus('listening', "Écoute en cours...");
+                    micBtnText.textContent = "Arrêter d'écouter";
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `message px-4 py-3 rounded-3xl max-w-[75%] text-sm ${
+                sender === 'user' 
+                    ? 'bg-indigo-600 text-white rounded-tr-none' 
+                    : 'bg-slate-800 text-slate-200 rounded-tl-none'
+            }`;
+            
+            const label = sender === 'user' ? 'Vous' : "N'FAYE";
+            
+            bubble.innerHTML = `
+                <div class="text-[10px] opacity-60 mb-0.5 font-medium">${label}</div>
+                <div>${text}</div>
+            `;
+            
+            messageDiv.appendChild(bubble);
+            conversation.appendChild(messageDiv);
+            conversation.scrollTop = conversation.scrollHeight;
+        }
+        
+        function speak(text) {
+            if (!synth) return;
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 0.95;
+            utterance.pitch = 1.05;
+            utterance.volume = 0.9;
+            
+            utterance.onstart = () => {
+                setStatus('speaking', "N'FAYE parle...");
+            };
+            
+            utterance.onend = () => {
+                resetOrb();
+            };
+            
+            synth.speak(utterance);
+        }
+        
+        function processCommand(text) {
+            const lowerText = text.toLowerCase().trim();
+            let response = "";
+            
+            if (lowerText.includes("bonjour") || lowerText.includes("salut")) {
+                response = "Bonjour ! Comment puis-je vous aider aujourd'hui ?";
+            } 
+            else if (lowerText.includes("heure")) {
+                const now = new Date();
+                response = `Il est actuellement ${now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}.`;
+            } 
+            else if (lowerText.includes("jour") || lowerText.includes("date")) {
+                const now = new Date();
+                response = `Nous sommes le ${now.toLocaleDateString('fr-FR', {weekday: 'long', day: 'numeric', month: 'long'})}.`;
+            } 
+            else if (lowerText.includes("au revoir") || lowerText.includes("arrêt")) {
+                response = "Au revoir ! À bientôt.";
+                setTimeout(() => {
+                    stopAssistant();
+                }, 2000);
+            } 
+            else {
+                response = "Je comprends votre demande. Malheureusement, cette fonctionnalité sera disponible dans la prochaine version.";
+            }
+            
+            addMessage(response, 'assistant');
+            speak(response);
+        }
+        
+        function quickCommand(command) {
+            addMessage(command, 'user');
+            
+            setStatus('thinking', "N'FAYE réfléchit...");
+            
+            setTimeout(() => {
+                processCommand(command);
+            }, 700);
+        }
+        
+        function stopAssistant() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+            
+            if (synth) {
+                synth.cancel();
+            }
+            
+            isListening = false;
+            resetOrb();
+            
+            // Add goodbye message
+            const lastMessage = document.createElement('div');
+            lastMessage.className = `flex justify-center mt-4`;
+            lastMessage.innerHTML = `
+                <div class="px-4 py-1.5 text-xs text-slate-400 bg-slate-900 rounded-3xl">
+                    Session terminée
+                </div>
+            `;
+            conversation.appendChild(lastMessage);
+        }
+        
+        // Initialize everything
+        function initialize() {
+            initializeTailwind();
+            
+            // Welcome message
+            setTimeout(() => {
+                const welcomeDiv = document.createElement('div');
+                welcomeDiv.className = `flex justify-center`;
+                welcomeDiv.innerHTML = `
+                    <div class="px-4 py-2 text-xs bg-slate-800 text-slate-400 rounded-3xl text-center">
+                        Bonjour ! Dites « Bonjour N'FAYE » pour commencer.
+                    </div>
+                `;
+                conversation.appendChild(welcomeDiv);
+            }, 800);
+            
+            // Keyboard support
+            document.addEventListener('keydown', function(e) {
+                if (e.key === " " && document.activeElement.tagName === "BODY") {
+                    e.preventDefault();
+                    toggleListening();
+                }
+            });
+            
+            // Easter egg: click orb 3 times
+            let clicks = 0;
+            orb.addEventListener('click', function() {
+                clicks++;
+                if (clicks === 3) {
+                    clicks = 0;
+                    speak("Bonjour, je suis N'FAYE, votre assistant personnel.");
+                }
+            });
+            
+            console.log('%c[N\'FAYE] Interface vocale initialisée avec succès.', 'color:#64748b');
+        }
+        
+        // Boot the application
+        window.onload = function() {
+            initialize();
+        }
+    </script>
+</body>
+</html>
