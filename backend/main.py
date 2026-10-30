@@ -29,6 +29,7 @@ class HistoryMessage(BaseModel):
 class ChatMessage(BaseModel):
     message: str = Field(min_length=1, max_length=10000)
     history: list[HistoryMessage] = Field(default_factory=list, max_length=12)
+    input_mode: Literal["text", "voice"] = "text"
 
 
 @app.get("/", include_in_schema=False)
@@ -50,4 +51,4 @@ def health_check():
 @app.post("/chat")
 def chat(data: ChatMessage):
     history = [item.model_dump() for item in data.history]
-    return {"response": get_response(data.message, history)}
+    return {"response": get_response(data.message, history, data.input_mode)}
