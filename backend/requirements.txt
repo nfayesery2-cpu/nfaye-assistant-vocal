@@ -3,3 +3,4 @@ uvicorn[standard]
 pydantic
 python-dotenv
 openai>=1.66.0,<3.0.0
+python-multipart
