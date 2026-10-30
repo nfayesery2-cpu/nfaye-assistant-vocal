@@ -1,17 +1,21 @@
 # Backend N'FAYE
 
-Backend Python basé sur FastAPI et connecté au modèle OpenAI GPT-OSS 120B hébergé par Groq, via l'API compatible OpenAI.
+Backend Python avec FastAPI, connecté à **OpenAI GPT-OSS 120B hébergé par Groq**.
 
-## Variables d'environnement
+L'intégration utilise le client Python OpenAI avec l'URL compatible Groq :
+`https://api.groq.com/openai/v1`, et l'API Responses.
 
-Configure ces variables dans Render > service nfaye-api > Environment :
+## Configuration sur Render
 
-- `GROQ_API_KEY` : clé API privée Groq.
-- `GROQ_MODEL` : `openai/gpt-oss-120b` par défaut.
+Dans Render > service `nfaye-api` > Environment, configure :
 
-Ne place jamais la vraie clé API dans GitHub, dans le code HTML ou dans un fichier public.
+- `GROQ_API_KEY` : clé API privée créée dans ton espace Groq.
+- `GROQ_MODEL` : `openai/gpt-oss-120b`.
+- `FRONTEND_ORIGIN` : facultatif, adresse exacte du site web si tu souhaites limiter les origines autorisées.
 
-Consulte les conditions et tarifs du fournisseur avant d'activer l'API.
+Ne publie jamais la vraie clé API dans GitHub, dans le code HTML ou dans un fichier public.
+
+Après avoir modifié les variables, sauvegarde et attends la fin du déploiement.
 
 ## Installation locale
 
@@ -19,7 +23,7 @@ Depuis le dossier du dépôt :
 
 ```bash
 python -m venv .venv
-pip install -r backend/requirements.txt
+pip install -r requirements.txt
 ```
 
 Démarre le serveur depuis le dossier `backend` :
@@ -31,7 +35,10 @@ uvicorn main:app --reload
 L'API sera disponible sur http://127.0.0.1:8000 et sa documentation sur
 http://127.0.0.1:8000/docs.
 
-## Routes
+## Vérification
 
-- `GET /` : vérifie que le serveur fonctionne.
-- `POST /chat` : reçoit un JSON contenant `message` et renvoie `response`.
+- `GET /` : vérifie le serveur et indique si `GROQ_API_KEY` est configurée.
+- `POST /chat` : reçoit `{"message":"Bonjour N'FAYE" }` et renvoie `{"response":"..." }`.
+
+Si l'API répond que la clé n'est pas configurée, vérifie les variables Render.
+Si le serveur ne démarre pas, consulte les journaux de déploiement Render.
