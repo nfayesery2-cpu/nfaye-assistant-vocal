@@ -250,9 +250,12 @@ kbd{font:500 11px var(--font-body);border:1px solid var(--glass-line);background
 const API_URL="https://nfaye-api.onrender.com";
 let isListening=false,micMuted=false,recognition=null,lastResponse="",lastLatency=null,mode="idle",autoListen=false;
 let audioContext=null,analyser=null,micStream=null,freqData=null;
+let mediaRecorder=null,recordedChunks=[],usingRecorderFallback=false;
 let speakPulse=0,level=0;
 const synth=window.speechSynthesis;
-const conversationHistory=[];
+const conversationHistory=(()=>{try{const saved=JSON.parse(localStorage.getItem('nfaye-conversation-v1')||'[]');return Array.isArray(saved)?saved.filter(x=>x&&['user','assistant'].includes(x.role)&&typeof x.content==='string').slice(-200):[]}catch(e){return []}})();
+function saveConversation(){try{localStorage.setItem('nfaye-conversation-v1',JSON.stringify(conversationHistory.slice(-200)))}catch(e){toast('Stockage local indisponible : cette conversation ne pourra pas être restaurée.')}}
+function restoreConversation(){if(!conversationHistory.length)return;$('messages').innerHTML='';conversationHistory.forEach(item=>addMessage(item.content,item.role));}
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 
@@ -268,7 +271,7 @@ function showLast(who,text){$('last').classList.add('show');$('last-who').textCo
 function addMessage(text,sender){const empty=$('messages').querySelector('.empty');if(empty)empty.remove();const item=document.createElement('article');item.className='msg '+(sender==='user'?'user':'assistant');const meta=document.createElement('div');meta.className='msg-meta';meta.textContent=(sender==='user'?'Vous':'N’FAYE')+' · '+timeNow();const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=String(text??'');item.append(meta,bubble);if(sender==='assistant'){const tools=document.createElement('div');tools.className='msg-tools';const copy=document.createElement('button');copy.className='copy-btn';copy.textContent='Copier';copy.onclick=()=>copyText(String(text??''));tools.append(copy);item.append(tools);lastResponse=String(text??'')}$('messages').append(item);$('messages').scrollTop=$('messages').scrollHeight;showLast(sender==='user'?'Vous':'N’FAYE',String(text??''))}
 async function copyText(text){try{await navigator.clipboard.writeText(text);toast('Réponse copiée.')}catch(e){toast('Copie impossible sur ce navigateur.')}}
 function copyLast(){if(!lastResponse){toast('Aucune réponse à copier.');return}copyText(lastResponse)}
-function clearHistory(){conversationHistory.length=0;$('messages').innerHTML='<div class="empty">Historique effacé.<br>Vous pouvez commencer une nouvelle conversation.</div>';lastResponse='';$('last').classList.remove('show');toast('Historique effacé.')}
+function clearHistory(){conversationHistory.length=0;try{localStorage.removeItem('nfaye-conversation-v1')}catch(e){}$('messages').innerHTML='<div class="empty">Historique effacé.<br>Vous pouvez commencer une nouvelle conversation.</div>';lastResponse='';$('last').classList.remove('show');toast('Historique effacé.')}
 function openDrawer(tab){$('overlay').classList.add('open');$('drawer').classList.add('open');switchTab(tab)}
 function closeDrawer(){$('overlay').classList.remove('open');$('drawer').classList.remove('open')}
 function switchTab(tab){const h=tab==='history';$('messages').classList.toggle('hidden',!h);$('settings').classList.toggle('active',!h);$('history-tab').classList.toggle('active',h);$('settings-tab').classList.toggle('active',!h);$('drawer-title').textContent=h?'Conversation':'Paramètres';$('drawer-sub').textContent=h?'Transcription de vos échanges':'Personnalisez la voix de N’FAYE'}
@@ -277,7 +280,7 @@ function loadVoices(){if(!synth)return;const select=$('voice');const voices=synt
 /* Reconnaissance vocale */
 function initSpeechRecognition(){
   const API=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!API){toast('La reconnaissance vocale n’est pas prise en charge. Essayez Chrome.');return false}
+  if(!API){return false}
   recognition=new API();recognition.continuous=false;recognition.interimResults=true;recognition.lang=$('language').value;
   recognition.onresult=async event=>{
     let interim='',finalText='';
@@ -291,6 +294,11 @@ function initSpeechRecognition(){
     else if(event.error==='network')toast('Réseau indisponible pour la reconnaissance vocale.');
     else if(event.error!=='no-speech'&&event.error!=='aborted')toast('Erreur du microphone : '+event.error);
     isListening=false;stopLevelMeter();
+    if(event.error==='network'||event.error==='service-not-allowed'||event.error==='language-not-supported'){
+      toast('Reconnaissance du navigateur indisponible. Passage à la transcription audio.');
+      startAudioRecording();
+      return;
+    }
     if(mode==='listening')setStatus('idle','Microphone arrêté','Appuyez sur le microphone pour recommencer');
   };
   recognition.onend=()=>{isListening=false;stopLevelMeter();if(mode==='listening')setStatus('idle','Prêt quand vous l’êtes','Appuyez sur le microphone pour parler à N’FAYE')};
@@ -315,9 +323,35 @@ function stopLevelMeter(){
   analyser=null;freqData=null;
 }
 
+async function startAudioRecording(){
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Votre navigateur ne permet pas l’enregistrement vocal. Essayez Chrome à jour en HTTPS.');setStatus('idle','Micro indisponible','Autorisez le microphone ou utilisez Chrome.');return}
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
+    mediaRecorder=new MediaRecorder(stream,preferred?{mimeType:preferred}:undefined);
+    recordedChunks=[];usingRecorderFallback=true;isListening=true;
+    mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
+    mediaRecorder.onerror=()=>{stream.getTracks().forEach(t=>t.stop());isListening=false;setStatus('idle','Erreur audio','Réessayez de parler.');toast('Impossible d’enregistrer votre voix.')};
+    mediaRecorder.onstop=async()=>{
+      stream.getTracks().forEach(t=>t.stop());isListening=false;usingRecorderFallback=false;stopLevelMeter();
+      const blob=new Blob(recordedChunks,{type:mediaRecorder?.mimeType||'audio/webm'});recordedChunks=[];
+      if(blob.size<1200){setStatus('idle','Aucune parole détectée','Maintenez une phrase complète puis réessayez.');return}
+      setStatus('thinking','Transcription…','N’FAYE transforme votre voix en texte.');
+      try{
+        const form=new FormData();form.append('audio',blob,'message.webm');
+        const response=await fetch(API_URL+'/transcribe',{method:'POST',body:form});
+        const data=await response.json();if(!response.ok)throw Error(data.detail||'Transcription impossible');
+        const transcript=String(data.text||'').trim();if(!transcript)throw Error('Aucune parole reconnue.');
+        addMessage(transcript,'user');await processCommand(transcript,'voice');
+      }catch(error){console.error('Transcription N’FAYE :',error);setStatus('idle','Transcription impossible','Vérifiez la connexion puis réessayez.');toast(error.message||'Erreur de transcription.')}
+    };
+    mediaRecorder.start();setStatus('listening','Je vous écoute','Parlez clairement. Touchez le bouton pour terminer.');
+    startLevelMeter();if(navigator.vibrate)navigator.vibrate(12);
+  }catch(error){console.error(error);isListening=false;setStatus('idle','Microphone indisponible','Autorisez le microphone dans votre navigateur.');toast('Accès au microphone refusé ou indisponible.')}
+}
 function startListening(){
   if(micMuted){toast('Le microphone est coupé. Réactivez-le d’abord.');return}
-  if(!recognition&&!initSpeechRecognition())return;
+  if(!recognition&&!initSpeechRecognition()){startAudioRecording();return}
   if(synth&&synth.speaking)synth.cancel();
   try{
     recognition.lang=$('language').value;recognition.start();isListening=true;
@@ -327,6 +361,7 @@ function startListening(){
   }catch(e){isListening=false;toast('Impossible de démarrer le microphone. Vérifiez son autorisation.');setStatus('idle','Microphone indisponible','Vérifiez les autorisations du navigateur')}
 }
 function stopListening(){
+  if(usingRecorderFallback&&mediaRecorder&&mediaRecorder.state!=='inactive'){mediaRecorder.stop();return}
   if(recognition&&isListening)recognition.stop();
   isListening=false;stopLevelMeter();
   setStatus('idle','Écoute arrêtée','Vous pouvez reprendre à tout moment');
@@ -345,8 +380,7 @@ function toggleMute(){
 
 /* Envoi à l'API (inchangé) */
 async function processCommand(text,inputMode='text'){
-  conversationHistory.push({role:'user',content:text});
-  if(conversationHistory.length>12)conversationHistory.splice(0,conversationHistory.length-12);
+  conversationHistory.push({role:'user',content:text});saveConversation();
   setStatus('thinking','Réflexion…','N’FAYE prépare sa réponse');
   const start=performance.now();
   try{
@@ -355,8 +389,7 @@ async function processCommand(text,inputMode='text'){
     const data=await response.json();
     if(typeof data.response!=='string'||!data.response.trim())throw Error('Réponse serveur invalide');
     lastLatency=Math.round(performance.now()-start);$('latency').textContent='Temps de réponse : '+lastLatency+' ms';
-    conversationHistory.push({role:'assistant',content:data.response});
-    if(conversationHistory.length>12)conversationHistory.splice(0,conversationHistory.length-12);
+    conversationHistory.push({role:'assistant',content:data.response});saveConversation();
     addMessage(data.response,'assistant');speak(data.response);
   }catch(e){
     console.error('Erreur API N’FAYE :',e);
@@ -465,6 +498,7 @@ $('speed').addEventListener('input',e=>{$('speed-value').textContent=Number(e.ta
 $('language').addEventListener('change',()=>{if(recognition)recognition.lang=$('language').value});
 $('auto-listen').addEventListener('change',e=>{autoListen=e.target.checked;store.set('nfaye-auto',autoListen?'1':'0')});
 autoListen=store.get('nfaye-auto')==='1';$('auto-listen').checked=autoListen;
+restoreConversation();
 document.addEventListener('keydown',e=>{
   const tag=(e.target.tagName||'').toLowerCase();
   if(e.key==='Escape'){if($('drawer').classList.contains('open'))closeDrawer();else stopSpeaking(false);return}
