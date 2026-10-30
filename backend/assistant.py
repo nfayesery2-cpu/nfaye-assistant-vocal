@@ -83,7 +83,7 @@ def get_response(message: str, history: list | None = None, input_mode: str = "t
     if input_mode == "voice":
         messages.append({"role": "system", "content": VOICE_INSTRUCTIONS})
 
-    for item in (history or [])[-12:]:
+    for item in (history or [])[-30:]:
         if not isinstance(item, dict):
             continue
         role, content = item.get("role"), item.get("content")
