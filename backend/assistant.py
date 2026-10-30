@@ -100,10 +100,38 @@ RÉPONSE VOCALE ET SYMBOLES
 """ .strip()
 
 
+def _identity_reply(message: str) -> str | None:
+    """Répond de façon déterministe aux questions sur l'identité et les créateurs."""
+    question = (message or "").lower().replace("’", "'").replace("'", " ")
+    creator_questions = (
+        "qui t a créé", "qui ta créé", "qui t a cree", "qui ta cree",
+        "qui est ton créateur", "qui est ton createur", "qui sont tes créateurs",
+        "qui sont tes createurs", "qui a créé n'faye", "qui a cree n'faye",
+        "qui a développé n'faye", "qui a developpe n'faye",
+        "qui est derrière n'faye", "qui est derriere n'faye",
+        "who created you", "who made you", "who developed you",
+    )
+    identity_questions = (
+        "qui es-tu", "qui es tu", "tu es qui", "présente-toi", "presente-toi",
+        "who are you", "are you chatgpt", "tu es chatgpt", "es-tu chatgpt",
+        "tu es openai", "es-tu openai", "développé par openai", "developpe par openai",
+        "created by openai", "are you made by openai",
+    )
+    if any(term in question for term in creator_questions):
+        return "J’ai été créé par SALI et SETH, deux élèves du LPELIA (Lycée professionnel d'électronique et d'informatique appliquées) de Treichville."
+    if any(term in question for term in identity_questions):
+        return "Je suis N’FAYE, un assistant IA créé par SALI et SETH."
+    return None
+
+
 def get_response(message: str, history: list | None = None, input_mode: str = "text") -> str:
     cleaned_message = (message or "").strip()
     if not cleaned_message:
         return "Dis-moi ce que tu aimerais savoir."
+
+    identity_answer = _identity_reply(cleaned_message)
+    if identity_answer:
+        return identity_answer
 
     api_key = os.getenv("GROQ_API_KEY", "").strip()
     if not api_key:
