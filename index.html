@@ -193,7 +193,7 @@
                 const response = await fetch(API_URL + "/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: text, history: conversationHistory.slice(-12) })
+                    body: JSON.stringify({ message: text, history: conversationHistory.slice(0, -1).slice(-12) })
                 });
                 if (!response.ok) throw new Error("Erreur HTTP " + response.status);
                 const data = await response.json();
