@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from assistant import get_response
+from backend.assistant import get_response
 
 app = FastAPI(title="N'FAYE API", version="1.2.0")
 FRONTEND_FILE = Path(__file__).resolve().parent.parent / "index.html"
