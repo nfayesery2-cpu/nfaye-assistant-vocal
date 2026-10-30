@@ -62,7 +62,7 @@
 
     <script>
         // Remplace cette adresse si Render affiche un autre domaine pour ton service.
-        const API_URL = "https://nfaye-api-prod.onrender.com";
+        const API_URL = window.location.origin; // Frontend et API servis depuis le même domaine Render.
         let isListening = false;
         let recognition = null;
         const synth = window.speechSynthesis;
