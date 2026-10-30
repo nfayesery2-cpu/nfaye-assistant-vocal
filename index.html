@@ -152,7 +152,7 @@
                 const transcript = event.results?.[0]?.[0]?.transcript?.trim();
                 if (!transcript) return;
                 addMessage(transcript, 'user');
-                await processCommand(transcript);
+                await processCommand(transcript, 'voice');
             };
             recognition.onerror = function(event) {
                 console.error('Erreur de reconnaissance vocale :', event.error);
@@ -185,7 +185,7 @@
             }
         }
 
-        async function processCommand(text) {
+        async function processCommand(text, inputMode = 'text') {
             conversationHistory.push({ role: 'user', content: text });
             if (conversationHistory.length > 12) conversationHistory.splice(0, conversationHistory.length - 12);
             setStatus('thinking', "N'FAYE réfléchit...");
@@ -193,7 +193,7 @@
                 const response = await fetch(API_URL + "/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: text, history: conversationHistory.slice(0, -1).slice(-12) })
+                    body: JSON.stringify({ message: text, history: conversationHistory.slice(0, -1).slice(-12), input_mode: inputMode })
                 });
                 if (!response.ok) throw new Error("Erreur HTTP " + response.status);
                 const data = await response.json();
