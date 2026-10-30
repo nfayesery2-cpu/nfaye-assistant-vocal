@@ -301,7 +301,7 @@ function initSpeechRecognition(){
     }
     if(mode==='listening')setStatus('idle','Microphone arrêté','Appuyez sur le microphone pour recommencer');
   };
-  recognition.onend=()=>{isListening=false;stopLevelMeter();if(mode==='listening')setStatus('idle','Prêt quand vous l’êtes','Appuyez sur le microphone pour parler à N’FAYE')};
+  recognition.onend=()=>{if(usingRecorderFallback)return;isListening=false;stopLevelMeter();if(mode==='listening')setStatus('idle','Prêt quand vous l’êtes','Appuyez sur le microphone pour parler à N’FAYE')};
   return true;
 }
 
