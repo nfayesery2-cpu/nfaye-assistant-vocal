@@ -62,7 +62,7 @@
 
     <script>
         // Remplace cette adresse si Render affiche un autre domaine pour ton service.
-        const API_URL = "https://nfaye-api-prod.onrender.com";
+        const API_URL = "";
         let isListening = false;
         let recognition = null;
         const synth = window.speechSynthesis;
@@ -76,7 +76,7 @@
             const label = document.getElementById('api-status-label');
             const dot = document.getElementById('api-status-dot');
             try {
-                const response = await fetch(API_URL + "/");
+                const response = await fetch(API_URL + "/health");
                 if (!response.ok) throw new Error("API indisponible");
                 const data = await response.json();
                 label.textContent = data.api_key_configured ? "IA CONNECTÉE" : "CLÉ GROQ MANQUANTE";
