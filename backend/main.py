@@ -29,7 +29,7 @@ class HistoryMessage(BaseModel):
 
 class ChatMessage(BaseModel):
     message: str = Field(min_length=1, max_length=10000)
-    history: list[HistoryMessage] = Field(default_factory=list, max_length=12)
+    history: list[HistoryMessage] = Field(default_factory=list, max_length=30)
     input_mode: Literal["text", "voice"] = "text"
 
 
