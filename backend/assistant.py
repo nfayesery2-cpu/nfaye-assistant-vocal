@@ -60,7 +60,7 @@ PÉDAGOGIE
 """.strip()
 
 
-def get_response(message: str, history: list | None = None) -> str:
+def get_response(message: str, history: list | None = None, input_mode: str = "text") -> str:
     cleaned_message = (message or "").strip()
     if not cleaned_message:
         return "Dis-moi ce que tu aimerais savoir."
@@ -93,7 +93,7 @@ def get_response(message: str, history: list | None = None) -> str:
         )
         result = client.responses.create(
             model=model,
-            instructions=SYSTEM_PROMPT,
+            instructions=SYSTEM_PROMPT + ("\n\n\nCORRECTION DES MESSAGES VOCAUX\n- Certains messages reçus proviennent de la reconnaissance vocale et peuvent contenir des mots mal reconnus, des fautes, des homophones, une ponctuation absente ou des phrases mal découpées.\n- Quand un message vient de la voix, reconstitue d'abord mentalement la phrase la plus probable en t'aidant du contexte et de l'intention de la personne.\n- Corrige silencieusement les erreurs évidentes de transcription et réponds directement à la question comprise, sans demander à la personne de retaper ni lui faire la leçon sur son orthographe.\n- Ne change jamais le sens voulu. Fais attention aux noms propres, aux lieux, aux marques, aux chiffres et aux termes techniques.\n- Si plusieurs interprétations plausibles changent réellement la réponse, pose une seule question courte pour clarifier.\n- N'affirme pas que tu as entendu parfaitement. Si le passage est incompréhensible, demande simplement de le répéter plus lentement.\n" if input_mode == "voice" else ""),
             input=conversation,
             max_output_tokens=1200,
         )
