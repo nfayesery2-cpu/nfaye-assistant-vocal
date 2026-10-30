@@ -34,7 +34,7 @@
                 <div class="w-11 h-11 flex items-center justify-center bg-indigo-600 rounded-2xl"><i class="fa-solid fa-robot text-white text-3xl"></i></div>
                 <div><h1 class="font-display text-4xl font-semibold tracking-tighter">N'FAYE</h1><p class="text-indigo-400 text-sm -mt-1">Assistant Vocal IA</p></div>
             </div>
-            <div class="flex items-center gap-x-2"><div class="px-3 py-1.5 rounded-3xl bg-slate-900 flex items-center gap-x-2 text-sm"><div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div><span class="text-emerald-400 text-xs font-medium">EN LIGNE</span></div></div>
+            <div class="flex items-center gap-x-2"><div id="api-status" class="px-3 py-1.5 rounded-3xl bg-slate-900 flex items-center gap-x-2 text-sm"><div id="api-status-dot" class="w-2 h-2 bg-amber-400 rounded-full"></div><span id="api-status-label" class="text-amber-400 text-xs font-medium">VÉRIFICATION...</span></div></div>
         </div>
         <div class="glass border border-slate-800 rounded-3xl p-8 modern-shadow">
             <div class="flex flex-col items-center mb-8">
@@ -70,6 +70,28 @@
         const statusText = document.getElementById('status-text');
         const micBtnText = document.getElementById('mic-btn-text');
         const orbIcon = document.getElementById('orb-icon');
+
+        async function checkApiStatus() {
+            const label = document.getElementById('api-status-label');
+            const dot = document.getElementById('api-status-dot');
+            try {
+                const response = await fetch(API_URL + "/");
+                if (!response.ok) throw new Error("API indisponible");
+                const data = await response.json();
+                label.textContent = data.api_key_configured ? "IA CONNECTÉE" : "CLÉ GROQ MANQUANTE";
+                label.className = data.api_key_configured
+                    ? "text-emerald-400 text-xs font-medium"
+                    : "text-amber-400 text-xs font-medium";
+                dot.className = data.api_key_configured
+                    ? "w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
+                    : "w-2 h-2 bg-amber-400 rounded-full";
+            } catch (error) {
+                label.textContent = "SERVEUR INDISPONIBLE";
+                label.className = "text-rose-400 text-xs font-medium";
+                dot.className = "w-2 h-2 bg-rose-400 rounded-full";
+                console.error("Vérification du serveur N'FAYE :", error);
+            }
+        }
 
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
@@ -226,7 +248,7 @@
             conversation.appendChild(welcome);
         }
 
-        window.addEventListener('DOMContentLoaded', initialize);
+        window.addEventListener('DOMContentLoaded', () => { initialize(); checkApiStatus(); });
     </script>
 </body>
 </html>
