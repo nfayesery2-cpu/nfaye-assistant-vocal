@@ -67,6 +67,8 @@
         let recognition = null;
         const synth = window.speechSynthesis;
         const conversation = document.getElementById('conversation');
+        // Conserve les derniers échanges pour que N'FAYE comprenne le contexte.
+        const conversationHistory = [];
         const orb = document.getElementById('orb');
         const statusText = document.getElementById('status-text');
         const micBtnText = document.getElementById('mic-btn-text');
@@ -184,18 +186,22 @@
         }
 
         async function processCommand(text) {
+            conversationHistory.push({ role: 'user', content: text });
+            if (conversationHistory.length > 12) conversationHistory.splice(0, conversationHistory.length - 12);
             setStatus('thinking', "N'FAYE réfléchit...");
             try {
                 const response = await fetch(API_URL + "/chat", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: text })
+                    body: JSON.stringify({ message: text, history: conversationHistory.slice(-12) })
                 });
                 if (!response.ok) throw new Error("Erreur HTTP " + response.status);
                 const data = await response.json();
                 if (typeof data.response !== "string" || !data.response.trim()) {
                     throw new Error("Réponse API invalide");
                 }
+                conversationHistory.push({ role: 'assistant', content: data.response });
+                if (conversationHistory.length > 12) conversationHistory.splice(0, conversationHistory.length - 12);
                 addMessage(data.response, 'assistant');
                 speak(data.response);
             } catch (error) {
