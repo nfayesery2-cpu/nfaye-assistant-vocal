@@ -248,7 +248,7 @@ kbd{font:500 11px var(--font-body);border:1px solid var(--glass-line);background
 
 <script>
 const API_URL="https://nfaye-api-prod.onrender.com";
-let isListening=false,micMuted=false,recognition=null,lastResponse="",lastLatency=null,mode="idle",autoListen=false;
+let isListening=false,micMuted=false,recognition=null,lastResponse="",lastLatency=null,mode="idle",autoListen=false,finalTranscriptHandled=false;
 let audioContext=null,analyser=null,micStream=null,freqData=null;
 let mediaRecorder=null,recordedChunks=[],usingRecorderFallback=false;
 let speakPulse=0,level=0;
@@ -282,11 +282,12 @@ function initSpeechRecognition(){
   const API=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!API){return false}
   recognition=new API();recognition.continuous=false;recognition.interimResults=true;recognition.lang=$('language').value;
+  recognition.onstart=()=>{isListening=true;setStatus('listening','Je vous écoute','Parlez, je transcris en direct…')};
   recognition.onresult=async event=>{
     let interim='',finalText='';
     for(let i=event.resultIndex;i<event.results.length;i++){const part=event.results[i][0].transcript;if(event.results[i].isFinal)finalText+=part;else interim+=part}
     if(interim){$('hint').textContent=interim;$('hint').classList.add('live')}
-    if(finalText.trim()){const transcript=finalText.trim();addMessage(transcript,'user');await processCommand(transcript,'voice')}
+    if(finalText.trim()&&!finalTranscriptHandled){finalTranscriptHandled=true;const transcript=finalText.trim();addMessage(transcript,'user');await processCommand(transcript,'voice')}
   };
   recognition.onerror=event=>{
     console.error('Reconnaissance vocale :',event.error);
@@ -301,7 +302,7 @@ function initSpeechRecognition(){
     }
     if(mode==='listening')setStatus('idle','Microphone arrêté','Appuyez sur le microphone pour recommencer');
   };
-  recognition.onend=()=>{if(usingRecorderFallback)return;isListening=false;stopLevelMeter();if(mode==='listening')setStatus('idle','Prêt quand vous l’êtes','Appuyez sur le microphone pour parler à N’FAYE')};
+  recognition.onend=()=>{if(usingRecorderFallback)return;isListening=false;if(mode==='listening')setStatus('idle','Prêt quand vous l’êtes',finalTranscriptHandled?'Votre phrase a été reçue. Vous pouvez continuer.':'Aucune phrase complète détectée. Réessayez en parlant un peu plus longtemps.')};
   return true;
 }
 
@@ -346,8 +347,8 @@ async function startAudioRecording(){
         addMessage(transcript,'user');await processCommand(transcript,'voice');
       }catch(error){console.error('Transcription N’FAYE :',error);setStatus('idle','Transcription impossible','Vérifiez la connexion puis réessayez.');toast(error.message||'Erreur de transcription.')}
     };
-    mediaRecorder.start();setStatus('listening','Je vous écoute','Parlez clairement. Touchez le bouton pour terminer.');
-    startLevelMeter();if(navigator.vibrate)navigator.vibrate(12);
+    mediaRecorder.start(250);setStatus('listening','Je vous écoute','Parlez clairement. Touchez le bouton pour terminer.');
+    if(navigator.vibrate)navigator.vibrate(12);
   }catch(error){console.error(error);usingRecorderFallback=false;isListening=false;setStatus('idle','Microphone indisponible','Autorisez le microphone dans votre navigateur.');toast('Accès au microphone refusé ou indisponible.')}
 }
 function startListening(){
@@ -355,9 +356,8 @@ function startListening(){
   if(!recognition&&!initSpeechRecognition()){startAudioRecording();return}
   if(synth&&synth.speaking)synth.cancel();
   try{
-    recognition.lang=$('language').value;recognition.start();isListening=true;
+    recognition.lang=$('language').value;finalTranscriptHandled=false;recognition.start();isListening=true;
     setStatus('listening','Je vous écoute','Parlez, je transcris en direct…');
-    startLevelMeter();
     if(navigator.vibrate)navigator.vibrate(12);
   }catch(e){isListening=false;toast('Impossible de démarrer le microphone. Vérifiez son autorisation.');setStatus('idle','Microphone indisponible','Vérifiez les autorisations du navigateur')}
 }
