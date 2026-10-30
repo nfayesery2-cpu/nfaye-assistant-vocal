@@ -19,17 +19,17 @@ Après avoir modifié les variables, sauvegarde et attends la fin du déploiemen
 
 ## Installation locale
 
-Depuis le dossier du dépôt :
+Depuis la racine du dépôt :
 
 ```bash
 python -m venv .venv
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
-Démarre le serveur depuis le dossier `backend` :
+Démarre le serveur depuis la racine du dépôt :
 
 ```bash
-uvicorn main:app --reload
+uvicorn backend.main:app --reload
 ```
 
 L'API sera disponible sur http://127.0.0.1:8000 et sa documentation sur
