@@ -498,7 +498,7 @@ $('clear-btn').addEventListener('click',clearHistory);
 $('speed').addEventListener('input',e=>{$('speed-value').textContent=Number(e.target.value).toFixed(2).replace('.',',')+'×'});
 $('language').addEventListener('change',()=>{if(recognition)recognition.lang=$('language').value});
 $('auto-listen').addEventListener('change',e=>{autoListen=e.target.checked;store.set('nfaye-auto',autoListen?'1':'0')});
-autoListen=store.get('nfaye-auto')==='1';$('auto-listen').checked=autoListen;
+const savedAutoListen=store.get('nfaye-auto');autoListen=savedAutoListen===null?true:savedAutoListen==='1';$('auto-listen').checked=autoListen;store.set('nfaye-auto',autoListen?'1':'0');
 restoreConversation();
 document.addEventListener('keydown',e=>{
   const tag=(e.target.tagName||'').toLowerCase();
