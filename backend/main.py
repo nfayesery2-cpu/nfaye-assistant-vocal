@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from assistant import get_response
 
-app = FastAPI(title="N'FAYE API", version="1.1.0")
+app = FastAPI(title="N'FAYE API", version="1.2.0")
 FRONTEND_FILE = Path(__file__).resolve().parent.parent / "index.html"
 
 app.add_middleware(
@@ -20,8 +21,14 @@ app.add_middleware(
 )
 
 
+class HistoryMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=4000)
+
+
 class ChatMessage(BaseModel):
     message: str = Field(min_length=1, max_length=10000)
+    history: list[HistoryMessage] = Field(default_factory=list, max_length=12)
 
 
 @app.get("/", include_in_schema=False)
@@ -42,4 +49,5 @@ def health_check():
 
 @app.post("/chat")
 def chat(data: ChatMessage):
-    return {"response": get_response(data.message)}
+    history = [item.model_dump() for item in data.history]
+    return {"response": get_response(data.message, history)}
