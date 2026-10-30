@@ -3,7 +3,7 @@
 Backend Python avec FastAPI, connecté à **OpenAI GPT-OSS 120B hébergé par Groq**.
 
 L'intégration utilise le client Python OpenAI avec l'URL compatible Groq :
-`https://api.groq.com/openai/v1`, et l'API Responses.
+`https://api.groq.com/openai/v1`, et l'API Chat Completions.
 
 ## Configuration sur Render
 
@@ -37,7 +37,8 @@ http://127.0.0.1:8000/docs.
 
 ## Vérification
 
-- `GET /` : vérifie le serveur et indique si `GROQ_API_KEY` est configurée.
+- `GET /` : sert l'interface web N'FAYE.
+- `GET /health` : vérifie le serveur et indique si `GROQ_API_KEY` est configurée.
 - `POST /chat` : reçoit `{"message":"Bonjour N'FAYE" }` et renvoie `{"response":"..." }`.
 
 Si l'API répond que la clé n'est pas configurée, vérifie les variables Render.
