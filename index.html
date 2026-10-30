@@ -247,7 +247,7 @@ kbd{font:500 11px var(--font-body);border:1px solid var(--glass-line);background
 <div id="toast" class="toast" role="status"></div>
 
 <script>
-const API_URL="https://nfaye-api.onrender.com";
+const API_URL="https://nfaye-api-prod.onrender.com";
 let isListening=false,micMuted=false,recognition=null,lastResponse="",lastLatency=null,mode="idle",autoListen=false;
 let audioContext=null,analyser=null,micStream=null,freqData=null;
 let mediaRecorder=null,recordedChunks=[],usingRecorderFallback=false;
@@ -324,12 +324,13 @@ function stopLevelMeter(){
 }
 
 async function startAudioRecording(){
-  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast('Votre navigateur ne permet pas l’enregistrement vocal. Essayez Chrome à jour en HTTPS.');setStatus('idle','Micro indisponible','Autorisez le microphone ou utilisez Chrome.');return}
+  usingRecorderFallback=true;
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){usingRecorderFallback=false;toast('Votre navigateur ne permet pas l’enregistrement vocal. Essayez Chrome à jour en HTTPS.');setStatus('idle','Micro indisponible','Autorisez le microphone ou utilisez Chrome.');return}
   try{
     const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     const preferred=['audio/webm;codecs=opus','audio/webm','audio/mp4'].find(t=>MediaRecorder.isTypeSupported(t));
     mediaRecorder=new MediaRecorder(stream,preferred?{mimeType:preferred}:undefined);
-    recordedChunks=[];usingRecorderFallback=true;isListening=true;
+    recordedChunks=[];isListening=true;
     mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size)recordedChunks.push(e.data)};
     mediaRecorder.onerror=()=>{stream.getTracks().forEach(t=>t.stop());isListening=false;setStatus('idle','Erreur audio','Réessayez de parler.');toast('Impossible d’enregistrer votre voix.')};
     mediaRecorder.onstop=async()=>{
@@ -347,7 +348,7 @@ async function startAudioRecording(){
     };
     mediaRecorder.start();setStatus('listening','Je vous écoute','Parlez clairement. Touchez le bouton pour terminer.');
     startLevelMeter();if(navigator.vibrate)navigator.vibrate(12);
-  }catch(error){console.error(error);isListening=false;setStatus('idle','Microphone indisponible','Autorisez le microphone dans votre navigateur.');toast('Accès au microphone refusé ou indisponible.')}
+  }catch(error){console.error(error);usingRecorderFallback=false;isListening=false;setStatus('idle','Microphone indisponible','Autorisez le microphone dans votre navigateur.');toast('Accès au microphone refusé ou indisponible.')}
 }
 function startListening(){
   if(micMuted){toast('Le microphone est coupé. Réactivez-le d’abord.');return}
