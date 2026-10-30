@@ -1,17 +1,17 @@
 # Backend N'FAYE
 
-Backend Python basé sur FastAPI et connecté aux modèles GPT d'OpenAI via la Responses API.
+Backend Python basé sur FastAPI et connecté au modèle OpenAI GPT-OSS 120B hébergé par Groq, via l'API compatible OpenAI.
 
 ## Variables d'environnement
 
 Configure ces variables dans Render > service nfaye-api > Environment :
 
-- `OPENAI_API_KEY` : clé API privée du projet OpenAI.
-- `OPENAI_MODEL` : `gpt-5.5` par défaut.
+- `GROQ_API_KEY` : clé API privée Groq.
+- `GROQ_MODEL` : `openai/gpt-oss-120b` par défaut.
 
 Ne place jamais la vraie clé API dans GitHub, dans le code HTML ou dans un fichier public.
 
-L'utilisation de l'API OpenAI est facturée séparément de l'abonnement ChatGPT. Vérifie les tarifs et les paramètres de facturation avant de l'activer.
+Consulte les conditions et tarifs du fournisseur avant d'activer l'API.
 
 ## Installation locale
 
