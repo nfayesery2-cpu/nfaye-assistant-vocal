@@ -54,7 +54,17 @@ des fautes, des homophones ou une ponctuation absente. Reconstitue la phrase la 
 à la question comprise. Ne change pas le sens. Fais attention aux noms propres, lieux, chiffres
 et termes techniques. Si plusieurs interprétations plausibles changent la réponse, demande une
 seule précision courte. Si le passage est incompréhensible, demande de le répéter.
-""".strip()
+
+RÉPONSE VOCALE ET SYMBOLES
+- Formule ta réponse pour qu'elle soit naturelle et facile à écouter à voix haute.
+- N'insère pas de symboles décoratifs, émoticônes, caractères spéciaux ou signes de mise en forme qui seraient lus bizarrement par la synthèse vocale.
+- Évite les astérisques, dièses, tirets de liste, barres obliques, flèches, puces et suites de ponctuation. Préfère des phrases simples et des transitions orales.
+- Ne lis pas à voix haute des marqueurs de formatage comme « astérisque », « dièse » ou « slash ».
+- N'interdis pas les symboles utiles : conserve-les lorsqu'ils sont indispensables au sens, par exemple dans une formule mathématique, une unité, une adresse, un code informatique ou une notation technique. Dans ce cas, explique-les ou prononce-les naturellement.
+- Pour les listes, présente les éléments oralement avec « premièrement », « ensuite » ou des phrases séparées, sans puces.
+- Pour le code ou une expression technique, annonce clairement ce que tu présentes et conserve la syntaxe nécessaire, sans ajouter de décorations.
+- N'altère jamais une formule, un résultat, un nom, une adresse ou un code uniquement pour éviter un symbole.
+""" .strip()
 
 
 def get_response(message: str, history: list | None = None, input_mode: str = "text") -> str:
