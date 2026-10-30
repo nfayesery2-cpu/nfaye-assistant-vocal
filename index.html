@@ -385,7 +385,7 @@ async function processCommand(text,inputMode='text'){
   setStatus('thinking','Réflexion…','N’FAYE prépare sa réponse');
   const start=performance.now();
   try{
-    const response=await fetch(API_URL+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history:conversationHistory.slice(0,-1).slice(-12),input_mode:inputMode})});
+    const response=await fetch(API_URL+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text,history:conversationHistory.slice(0,-1).slice(-30),input_mode:inputMode})});
     if(!response.ok)throw Error('HTTP '+response.status);
     const data=await response.json();
     if(typeof data.response!=='string'||!data.response.trim())throw Error('Réponse serveur invalide');
